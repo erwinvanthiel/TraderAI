@@ -1,18 +1,19 @@
 import numpy as np
 from stock_market_simulation import StockMarketSimulationEnvironment
-from trader_ai import TraderAI
+from trader_ai import DeepQTrader
 import http.server
 
+def simulation(x):
+    return np.sin(2 * np.pi * x / 24)
 
-env = StockMarketSimulationEnvironment(100, np.sin)
-agent = TraderAI(4, 2, 3, 0.01, True)
-env.add_agent(agent)
+env = StockMarketSimulationEnvironment(100, simulation)
+agent = DeepQTrader(env, 10, 4)
 
 class RequestHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
 
-        # Update environemnt
-        env.next()
+        # trigger agent
+        action = agent.act()
 
         # Send response status code
         self.send_response(200)
@@ -20,8 +21,9 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
         # Send headers
         self.send_header('Content-type','application/json')
         self.end_headers()
+
         # Send message back to client
-        message = (str)(agent.state_batch)
+        message = str(action) + str(agent.in_trade)
 
         # Write content as utf-8 data
         self.wfile.write(bytes(message, "utf8"))

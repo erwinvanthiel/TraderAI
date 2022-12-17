@@ -5,12 +5,11 @@ import torch
 class StockMarketSimulationEnvironment(Environment):
 
 	def __init__(self, memory_size, stock_simulation_function):
-		super().__init__()
 		self.clock = 0
 		self.stocks = torch.zeros(memory_size)
 		self.stock_simulation_function = stock_simulation_function
 
-	def next(self):
+	def next(self, agent, action):
 		# Increment clock
 		self.clock = self.clock + 1
 
@@ -21,9 +20,20 @@ class StockMarketSimulationEnvironment(Environment):
 			self.stocks[index] = self.stocks[index+1]
 		self.stocks[self.stocks.shape[0]-1] = self.stock_simulation_function(self.clock)
 
-	    # train agents
-		for agent in self.agents:
-			agent.update_state(self.stocks[-agent.num_input_variables:])
+		# give the agent its reward and the next state
+		return (self.get_reward(agent, action), self.stocks)
+
+	# Buy: 1 - 0 = 1
+	# Do nothing: 1 - 1 = 0
+	# Sell: 1 - 2 = - 1
+	def get_reward(self, agent, action):
+		return (self.stocks[self.stocks.shape[0]-1] - self.stocks[self.stocks.shape[0]-2]) * (1 - action)
+		
+		
+		
+
+
+
 
 
 
