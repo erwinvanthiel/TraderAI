@@ -8,28 +8,40 @@ class StockMarketSimulationEnvironment(Environment):
 		self.clock = 0
 		self.stocks = torch.zeros(memory_size)
 		self.stock_simulation_function = stock_simulation_function
+		self.trade_entry = None
 
-	def next(self, agent, action):
+	def next(self, action):
+		reward = torch.zeros(1)
+		if action == 0:
+			self.trade_entry = self.get_current_price()
+		if action == 2:
+			reward = self.get_reward()
+
 		# Increment clock
 		self.clock = self.clock + 1
 
-		# Shift all stock values to the left and add latest value
+		# Update stock price
 		for index, element in enumerate(self.stocks):
 			if index == len(self.stocks)-1:
 				continue
 			self.stocks[index] = self.stocks[index+1]
 		self.stocks[self.stocks.shape[0]-1] = self.stock_simulation_function(self.clock)
 
-		# give the agent its reward and the next state
-		return (self.get_reward(agent, action), self.stocks)
+		if action == 0:
+			reward = self.get_current_price() - self.stocks[self.stocks.shape[0]-2]
 
-	# Buy: 1 - 0 = 1
-	# Do nothing: 1 - 1 = 0
-	# Sell: 1 - 2 = - 1
-	def get_reward(self, agent, action):
-		return (self.stocks[self.stocks.shape[0]-1] - self.stocks[self.stocks.shape[0]-2]) * (1 - action)
+		# give the agent its reward and the next state
+		return (10*reward, self.stocks)
+
+	# Buy: 1
+	# Do nothing: 1 
+	# Sell: 2
+	# When agent sells, reward is the profit/loss
+	def get_reward(self):
+		return (self.get_current_price() - self.trade_entry)
 		
-		
+	def get_current_price(self):
+		return self.stocks.clone()[self.stocks.shape[0]-1] 
 		
 
 
