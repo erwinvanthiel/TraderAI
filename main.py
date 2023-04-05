@@ -21,7 +21,7 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
 
         # Send data back to client
-        message = json.dumps(DataView(agent.state.tolist()[1:], action, (env.trade_entry.item() if env.trade_entry != None else -1), reward.item(), agent.total_reward).__dict__)
+        message = json.dumps(DataView(agent.state.tolist(), action, (env.trade_entry.item() if env.trade_entry != None else -1), reward.item(), agent.total_reward).__dict__)
         print(action, env.trade_entry, reward)
         # Write content as utf-8 data
         self.wfile.write(bytes(message, "utf8"))
@@ -46,8 +46,8 @@ class DataView():
         self.entry = entry
         self.total_reward = total_reward
 
-env = StockMarketSimulationEnvironment(80, composite_sine)
-agent = DeepQTrader(env, 20)
+env = StockMarketSimulationEnvironment(80, sine)
+agent = DeepQTrader(env, 10)
 
 # Training
 for i in range(0, 100000):

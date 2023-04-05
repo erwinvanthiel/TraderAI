@@ -7,7 +7,7 @@ import random
 # It fixes the stop-loss and take-profit and learns when to enter the market and when to leave
 class DeepQTrader(Agent):
 
-	def __init__(self, env, num_input_variables, epsilon=1, batch_size=64, learning_rate=0.001, gamma=0.90, train_agent=True):
+	def __init__(self, env, num_input_variables, epsilon=1, batch_size=64, learning_rate=0.001, gamma=0.92, train_agent=True):
 		# Stock state tracking parameters
 		self.batch_size = batch_size
 		self.num_input_variables = num_input_variables

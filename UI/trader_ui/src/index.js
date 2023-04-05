@@ -34,24 +34,27 @@ function MyComponent() {
   className="plotje"
   data={[
     {
-      x: data.stocks.slice(0, 1).map((element, index) => index),
-      y: data.stocks.slice(0, 1),
-      type: 'bar',
-      marker: {
-        color: data.reward >= 1 ? 'green' : 'red',
-        opacity: 0.8,
-      },
-    },
-    {
-      x: data.stocks.slice(1).map((element, index) => index + 1),
-      y: data.stocks.slice(1),
+      x: data.stocks.map((element, index) => index),
+      y: data.stocks,
       type: 'bar',
       marker: {
         color: "black",
       },
     },
+    {
+      x: data.stocks.map((element, index) => index),
+      y: data.stocks.map((element, index) => data.stocks.length - 2 === index ? data.stocks[index] : 0),
+      type: 'bar',
+      marker: {
+        color: data.reward === 0 ? 'black' : (data.reward >= 0 ? 'green' : 'red'),
+        opacity: 0.8,
+      },
+    }
 
   ]}
+  layout={{
+        barmode: 'overlay' // set barmode to 'overlay' for overlapping bars
+      }}
 /> : null
       }
       { data.reward != undefined ? <p>Entry: {data.entry}</p> : null }
