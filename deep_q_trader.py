@@ -30,11 +30,12 @@ class DeepQTrader(Agent):
 
     # Use the gathered batch samples to perform a learning update
     def update_model_parameters(self):
+        self.model.zero_grad()
         pred_y = self.model(self.state_batch)
         loss = self.loss_function(pred_y, self.trade_results.long())
-        self.model.zero_grad()
         loss.backward()
         self.optimizer.step()
+        print(loss)
 
     # Reset the batch parameters
     def reset(self):

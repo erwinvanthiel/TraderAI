@@ -5,40 +5,8 @@ import http.server
 import json
 import random
 
-def sine(x):
-    return 1 + np.sin(2 * np.pi * x / 24)
-
-def composite_sine(x):
-    val = (1 + np.sin(2 * np.pi * x / 24)) * (random.random() * 0.1 + 0.95)
-    val += (1 + np.sin(2 * np.pi * x / (7*24))) * (random.random() * 0.1 + 0.95) * 5
-    return val
-
-def test(x):
-    return [0,1,2,3,4,5,4,3,2,1][x % 10]
-
-env = StockMarketSimulationEnvironment(1000, composite_sine)
-agent = DeepQTrader(env, 6, 8)
-agent.save_model("params.pt")
-
-for i in range(0, 1000000):
-    print(i)
-    agent.act()
-
-agent.epsilon = 0
-agent.total_reward = 0
-
-print("Done training")
-
-class DataView():
-
-    def __init__(self, stocks, action, entry, reward, total_reward):
-        self.stocks = stocks
-        self.action = action
-        self.reward = reward
-        self.entry = entry
-        self.total_reward = reward
-
 class RequestHandler(http.server.BaseHTTPRequestHandler):
+
     def do_GET(self):
 
         # trigger agent
@@ -53,11 +21,44 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
 
         # Send data back to client
-        message = json.dumps(DataView(agent.state.tolist(), action, (env.trade_entry.item() if env.trade_entry != None else -1), reward.item(), agent.total_reward).__dict__)
+        message = json.dumps(DataView(agent.state.tolist()[1:], action, (env.trade_entry.item() if env.trade_entry != None else -1), reward.item(), agent.total_reward).__dict__)
         print(action, env.trade_entry, reward)
         # Write content as utf-8 data
         self.wfile.write(bytes(message, "utf8"))
         return
+
+def sine(x):
+    return 1 + np.sin(2 * np.pi * x / 24)
+
+def composite_sine(x):
+    val = (1 + np.sin(2 * np.pi * x / 24)) * (random.random() * 0.1 + 0.95)
+    val += (1 + np.sin(2 * np.pi * x / (7*24))) * (random.random() * 0.1 + 0.95) * 5
+    return val
+
+def test(x):
+    return [0,1,2,3,4,5,4,3,2,1][x % 10]
+
+class DataView():
+    def __init__(self, stocks, action, entry, reward, total_reward):
+        self.stocks = stocks
+        self.action = action
+        self.reward = reward
+        self.entry = entry
+        self.total_reward = total_reward
+
+env = StockMarketSimulationEnvironment(80, composite_sine)
+agent = DeepQTrader(env, 20)
+
+# Training
+for i in range(0, 100000):
+    print(i)
+    agent.act()
+
+agent.save_model("test.pt")
+agent.epsilon = 0
+agent.total_reward = 0
+
+print("Done training")
 
 # Create server
 server = http.server.HTTPServer(('localhost', 8000), RequestHandler)

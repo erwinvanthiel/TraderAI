@@ -7,7 +7,7 @@ import random
 # It fixes the stop-loss and take-profit and learns when to enter the market and when to leave
 class DeepQTrader(Agent):
 
-	def __init__(self, env, num_input_variables, num_hidden_variables, epsilon=1, batch_size=64, learning_rate=0.05, gamma=0.9, train_agent=True):
+	def __init__(self, env, num_input_variables, epsilon=1, batch_size=64, learning_rate=0.001, gamma=0.90, train_agent=True):
 		# Stock state tracking parameters
 		self.batch_size = batch_size
 		self.num_input_variables = num_input_variables
@@ -31,7 +31,7 @@ class DeepQTrader(Agent):
 		self.trade_state = torch.zeros(batch_size)
 
 		# Qlearning DNN
-		self.model = self.create_model(num_input_variables, num_hidden_variables)
+		self.model = self.create_model(num_input_variables)
 		self.loss_function = torch.nn.MSELoss()
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
 
@@ -41,17 +41,17 @@ class DeepQTrader(Agent):
 		# DEBUG
 		# with torch.no_grad(): 
 		# 	print(self.model(torch.tensor([0,1,2,3,4,1]).float()))
-
-		q_pred = self.model(self.state_batch)[torch.arange(self.batch_size), self.action_batch.long()]
+		self.model.zero_grad()
+		q_pred = self.model(self.state_batch.unsqueeze(1)).squeeze()[torch.arange(self.batch_size), self.action_batch.long()]
+		print(q_pred.shape)
 		self.q_next_values[torch.where(self.action_batch == 2)] = 0
 		q_target = self.rewards + self.gamma * self.q_next_values
 
 		loss = self.loss_function(q_pred, q_target)
-		#print(loss)
-		self.model.zero_grad()
+		print(loss)
 		loss.backward()
 		self.optimizer.step()
-		self.epsilon = self.epsilon * 0.999
+		# self.epsilon = self.epsilon * 0.9999
 		
 	# Reset the batch clock
 	def reset(self):
@@ -66,7 +66,7 @@ class DeepQTrader(Agent):
 			action = 2
 
 		with torch.no_grad():
-			q_values = self.model(self.state_batch[self.counter])
+			q_values = self.model(self.state_batch[self.counter].unsqueeze(0).unsqueeze(1)).squeeze()
 
 		# Ensure we only buy when not in a trade and sell when in a trade
 		if self.in_trade:
@@ -112,9 +112,9 @@ class DeepQTrader(Agent):
 
 		# Store next q values
 		with torch.no_grad():
-			next_q_values = self.model(self.next_state_batch[self.counter])
+			next_q_values = self.model(self.next_state_batch[self.counter].unsqueeze(0).unsqueeze(1)).squeeze()
 			next_q_values[2-int(self.in_trade)*2] = -1000 # prevent buying when in trade
-			self.q_next_values[self.counter] =  torch.max(next_q_values)
+			self.q_next_values[self.counter] = torch.max(next_q_values)
 
 		self.total_reward += reward.item()
 
@@ -133,25 +133,28 @@ class DeepQTrader(Agent):
 
 	# Calculate take-profit, i.e. the price we consider high enough to exit the trade
 	def calculate_tp(self):
-		self.tp = self.current_value() + 3
+		self.tp = self.current_value() + 2
 
 	# Calculate stop-loss, i.e. the price we consider low enough to exit the trade
 	def calculate_sl(self):
 		#return self.current_value(self.state) - (torch.mean(self.state) - torch.max(self.state))
-		self.sl = self.current_value() - 3
+		self.sl = self.current_value() - 1.5
 
 	# maintain current prediction
 	def current_value(self):
 		return self.state[self.state.shape[0] - 1].clone()
 
 	# Construct DNN
-	def create_model(self, num_input_variables, num_hidden_variables):
+	def create_model(self, number_of_inputs):
 		model = torch.nn.Sequential(
-					  torch.nn.Linear(num_input_variables, num_hidden_variables),
-					  torch.nn.Sigmoid(),
-					  torch.nn.Linear(num_hidden_variables, 4),
-					  torch.nn.Sigmoid(),
-					  torch.nn.Linear(4, 3)
+					  torch.nn.Conv1d(in_channels=1, out_channels=32, kernel_size=3),
+					  torch.nn.ReLU(),
+					  torch.nn.Conv1d(in_channels=32, out_channels=64, kernel_size=3),
+					  torch.nn.ReLU(),
+					  torch.nn.Flatten(),
+					  torch.nn.Linear(64*(number_of_inputs-4), 128),
+				      torch.nn.ReLU(),
+			          torch.nn.Linear(128,3)
 					  )
 		return model
 
