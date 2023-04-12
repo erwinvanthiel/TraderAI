@@ -27,11 +27,11 @@ class StockMarketSimulationEnvironment(Environment):
 			self.stocks[index] = self.stocks[index+1]
 		self.stocks[self.stocks.shape[0]-1] = self.stock_simulation_function(self.clock)
 
-		if action == 0:
-			reward += torch.tensor(0.1) if self.stocks[self.stocks.shape[0]-1].item() > self.stocks[self.stocks.shape[0]-2].item() else torch.tensor(-0.1)
-
-		if action == 2:
-			reward += torch.tensor(-0.05) if self.stocks[self.stocks.shape[0]-1].item() > self.stocks[self.stocks.shape[0]-2].item() else torch.tensor(0.05)
+		# if action == 0:
+		# 	reward += torch.tensor(0.1) if self.stocks[self.stocks.shape[0]-1].item() > self.stocks[self.stocks.shape[0]-2].item() else torch.tensor(-0.1)
+		#
+		# if action == 2:
+		# 	reward += torch.tensor(-0.05) if self.stocks[self.stocks.shape[0]-1].item() > self.stocks[self.stocks.shape[0]-2].item() else torch.tensor(0.05)
 
 		# give the agent its reward and the next state
 		return (reward, self.stocks)
@@ -39,7 +39,7 @@ class StockMarketSimulationEnvironment(Environment):
 	# Buy: 1
 	# Do nothing: 1 
 	# Sell: 2
-	# When agent sells, reward is the profit/loss
+	# When agent sells, reward is the profit/loss + a bonus for exiting/entering at the right moment
 	def get_reward(self):
 		return (self.get_current_price() - self.trade_entry)
 		

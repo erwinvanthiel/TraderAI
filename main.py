@@ -54,7 +54,7 @@ for i in range(0, 100000):
     print(i)
     agent.act()
 
-agent.save_model("test.pt")
+agent.save_model("sine-profit-reward.pt")
 agent.epsilon = 0
 agent.total_reward = 0
 
