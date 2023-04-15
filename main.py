@@ -47,7 +47,7 @@ class DataView():
         self.total_reward = total_reward
 
 env = StockMarketSimulationEnvironment(80, sine)
-agent = DeepQTrader(env, 10)
+agent = DeepQTrader(env, 8)
 
 # Training
 for i in range(0, 100000):
