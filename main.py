@@ -47,18 +47,24 @@ class DataView():
         self.total_reward = total_reward
 
 env = StockMarketSimulationEnvironment(80, sine)
-agent = DeepQTrader(env, 8)
+agent = DeepQTrader(env, 16)
 
 # Training
-for i in range(0, 100000):
+for i in range(0, 200000):
     print(i)
     agent.act()
 
-agent.save_model("sine-profit-reward.pt")
+agent.save_model("sine-wave-profit-reward.pt")
 agent.epsilon = 0
 agent.total_reward = 0
+env.train_agent = False
+agent.train_agent = False
 
 print("Done training")
+
+for i in range(0, 1000):
+    print(i)
+    agent.act()
 
 # Create server
 server = http.server.HTTPServer(('localhost', 8000), RequestHandler)

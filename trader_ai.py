@@ -7,7 +7,7 @@ import random
 # It fixes the stop-loss and take-profit and learns when to enter the market and when to leave
 class DeepQTrader(Agent):
 
-	def __init__(self, env, num_input_variables, epsilon=1, batch_size=64, learning_rate=0.001, gamma=0.90, train_agent=True):
+	def __init__(self, env, num_input_variables, epsilon=1, batch_size=64, learning_rate=0.005, gamma=0.95, train_agent=True):
 		# Stock state tracking parameters
 		self.batch_size = batch_size
 		self.num_input_variables = num_input_variables
@@ -50,7 +50,7 @@ class DeepQTrader(Agent):
 		print(loss)
 		loss.backward()
 		self.optimizer.step()
-		self.epsilon = self.epsilon * 0.9999
+		self.epsilon = self.epsilon * 0.999
 		
 	# Reset the batch clock
 	def reset(self):
@@ -124,8 +124,9 @@ class DeepQTrader(Agent):
 		self.counter += 1		
 
 		# If buffer is full, perform learning update and clean buffer
-		if self.counter == self.batch_size and self.train_agent:
-			self.update_model_parameters()
+		if self.counter == self.batch_size:
+			if self.train_agent:
+				self.update_model_parameters()
 			self.reset()
 
 		return action, reward
